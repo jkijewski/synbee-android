@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android's backup of the app: the hub's addresses and key fingerprint and the names, never the token. The token is
+     encrypted with a key that stays on this phone, so a new phone pairs again. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <include domain="sharedpref" path="hub.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="sharedpref" path="hub.xml" />
+    </device-transfer>
+</data-extraction-rules>
