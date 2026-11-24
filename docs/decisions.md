@@ -21,3 +21,7 @@ Android installs an update only if it is signed with the same key as the install
 ## A5. A demo with a sample home, inside the app
 
 Most of the app needs a SynBee hub on a Synology NAS, which store reviewers and curious users don't have. "Try the demo" on the pairing screen swaps the hub for `DemoHub`, a sample home kept in memory that answers like a hub (rooms, actions with state, devices in words) and changes state when an action runs. It sends nothing anywhere and doesn't touch a real pairing. Screens talk to a `Hub` interface, so the demo exercises the same screens as a real hub; screenshots for the store come from it, with no real home's names in them.
+
+## A6. Status tiles only show, and the hub decides
+
+Status tiles (devices, sensor groups, checks) are read-only and come ready-made from the hub: words, a level, an optional colour and an explanation. The app only lays them out and colours them, so the words are the owner's and match the web interface, tiles hidden from a member never reach their phone, and a new kind of tile needs no app update. Pausing alerts is a request to the hub, which checks the member may.

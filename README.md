@@ -9,6 +9,9 @@ The mobile app for [SynBee](https://github.com/jkijewski/synbee), a private Zigb
 - **Pairs by QR code** from the hub's **App users** page, or by typing the hub's address and the pairing code, after comparing the hub's key with the one the page shows.
 - **Shows rooms and actions** (`GET /api/app/v1/home`): one tab per room, in the hub's order and colours, swiped left and right; each room's actions as tiles with their icons. Actions in no room are under "Other". A tap runs the action.
 - **Shows state:** a tile is filled in its room's colour when what it switches is on, grey when off, and has a thick border when only some is on; a check marks an action whose devices already show what it sets. A line under the name says "Off", "2 of 3 on" or the like. States are re-read every 5 seconds while the app is in front.
+- **Status tiles** in each room, before its actions: devices, sensor groups and checks the owner chose, in words and colours (temperatures blue to red); a tap explains them.
+- **"Not run"**: an action whose conditions don't hold says why.
+- **Pause alerts** (⋮) for people the owner allows: nothing goes to Synology Chat for an hour, eight hours or until 7:00.
 - **Long press** on a tile shows what the action touches, device by device; on a room tab, the room's devices.
 - **About** (⋮ → About): what the app is, the author, the MIT licence in full and the no-warranty notice.
 - **Demo:** "Try the demo" on the pairing screen shows a sample home kept in the app, for trying it without a hub. Nothing is sent anywhere.
@@ -50,6 +53,10 @@ To try it without a NAS, run the hub's simulator (see the hub's README) with `HU
 ## Support
 
 Questions and problems: [GitHub issues](https://github.com/jkijewski/synbee-android/issues) or jacek.kijewski.gdynia@gmail.com. If SynBee is useful to you, you can [buy me a coffee](https://buycoffee.to/jacek-kijewski).
+
+## Trademarks
+
+SynBee is an independent project, not affiliated with or endorsed by Synology Inc. Synology and Synology Chat are trademarks of Synology Inc.
 
 ## Licence
 

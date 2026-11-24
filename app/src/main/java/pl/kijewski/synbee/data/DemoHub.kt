@@ -79,11 +79,32 @@ class DemoHub : Hub {
         return HubAction(a.id, a.name, a.icon, a.description, listOf(a.room), if (matches(a)) "active" else "inactive", power, status)
     }
 
-    override suspend fun me() = Me("Demo", "This phone", "demo", actions.size, rooms.size)
+    private var paused: AlertPause? = null
+
+    override suspend fun me() = Me("Demo", "This phone", "demo", actions.size, rooms.size, mayPauseAlerts = true, alertsPaused = paused?.takeIf { it.until > System.currentTimeMillis() })
+
+    override suspend fun pauseAlerts(minutes: Int): PauseResult {
+        paused = if (minutes == 0) null else AlertPause(System.currentTimeMillis() + minutes * 60_000L, "Demo (this phone)")
+        return PauseResult(paused)
+    }
+
+    private fun tiles(): List<StatusTile> {
+        val bedroomLit = lights.values.filter { it.room == "Bedroom" }.count { it.on }
+        return listOf(
+            StatusTile("device:climate", "device", 1, "Living room", "thermostat", "21.4 °C", "info", listOf("Temperature: 21.4 °C", "Humidity: 48 %", "Battery: 87 %"), color = "#4aba6a"),
+            StatusTile("sensors:windows", "sensors", 2, "Windows", "sensor_door", "All closed", "fine", emptyList()),
+            StatusTile(
+                "check:night", "check", 2, "Ready for the night", if (bedroomLit == 0) "task_alt" else "report",
+                if (bedroomLit == 0) "Ready: lights off, windows closed" else "Not yet", if (bedroomLit == 0) "fine" else "warning",
+                if (bedroomLit == 0) listOf("Windows: All closed", "Bedroom lights are off") else listOf("$bedroomLit bedroom light(s) on"),
+            ),
+            StatusTile("device:leak", "device", 3, "Leak sensor", "water_damage", "Dry", "fine", listOf("Water: Dry", "Battery: 92 %")),
+        )
+    }
 
     override suspend fun connection() = Connection()
 
-    override suspend fun home() = Home(rooms, actions.map(::view))
+    override suspend fun home() = Home(rooms, actions.map(::view), tiles())
 
     override suspend fun details(id: Int): ActionDetails {
         val a = actions.firstOrNull { it.id == id } ?: throw HubRefusedException(404, "Not found")

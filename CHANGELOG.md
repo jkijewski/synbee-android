@@ -1,6 +1,13 @@
 # Changelog
 
-## 1.0.0 (unreleased)
+## 1.1.0 (24 November 2026)
+
+- Status tiles in each room: devices, sensor groups and checks the owner chose, coloured by level (temperatures blue to red), explained on a tap.
+- Actions that don't run because their conditions don't hold say why.
+- Pause alerts (⋮) for people the owner allows.
+- ⋮ → Try the demo also once paired; the demo shows status tiles.
+
+## 1.0.0
 
 First release, prepared for Google Play.
 

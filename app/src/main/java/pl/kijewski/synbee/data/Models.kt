@@ -45,6 +45,33 @@ import kotlinx.serialization.Serializable
 @Serializable data class RoomPage(val id: Int, val name: String, val icon: String = "", val color: String = "#7aa7e0", val devices: List<DeviceView>)
 @Serializable data class HubRoom(val id: Int, val name: String, val icon: String = "", val color: String = "#7aa7e0")
 /** The app's home screen: the member's rooms, in the owner's order and colours, and their actions. */
-@Serializable data class Home(val rooms: List<HubRoom>, val actions: List<HubAction>)
-@Serializable data class RunResult(val ok: Boolean, val failedStep: Int? = null, val error: String? = null)
-@Serializable data class Me(val member: String, val phone: String, val hubVersion: String, val actions: Int, val rooms: Int)
+@Serializable data class Home(val rooms: List<HubRoom>, val actions: List<HubAction>, val tiles: List<StatusTile> = emptyList())
+/** A read-only status tile: a device the owner picked, a sensor group or a check. `level`: fine, info, warning or alarm. */
+@Serializable data class StatusTile(
+    val id: String,
+    val kind: String,
+    val room: Int? = null,
+    val name: String,
+    val icon: String = "",
+    val text: String = "",
+    val level: String = "info",
+    /** The explanation shown on a press, line by line. */
+    val why: List<String> = emptyList(),
+    /** A colour hint as #rrggbb, e.g. a temperature from blue to red. */
+    val color: String? = null,
+)
+/** Alerts paused by someone, until when (ms since 1970). */
+@Serializable data class AlertPause(val until: Long, val by: String)
+@Serializable data class PauseResult(val paused: AlertPause? = null)
+/** `notRun` is set when the action's conditions weren't met, so nothing ran: what wasn't true. */
+@Serializable data class RunResult(val ok: Boolean, val failedStep: Int? = null, val error: String? = null, val notRun: String? = null)
+@Serializable data class Me(
+    val member: String,
+    val phone: String,
+    val hubVersion: String,
+    val actions: Int,
+    val rooms: Int,
+    /** Whether this member may pause alerts (the owner allows it on the hub). */
+    val mayPauseAlerts: Boolean = false,
+    val alertsPaused: AlertPause? = null,
+)

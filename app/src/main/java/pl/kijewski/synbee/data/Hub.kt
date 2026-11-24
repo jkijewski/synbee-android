@@ -13,4 +13,6 @@ interface Hub {
     suspend fun details(id: Int): ActionDetails
     suspend fun room(id: Int): RoomPage
     suspend fun run(id: Int): RunResult
+    /** Pauses alerts for `minutes`, or resumes with 0 (members the owner allows). */
+    suspend fun pauseAlerts(minutes: Int): PauseResult
 }

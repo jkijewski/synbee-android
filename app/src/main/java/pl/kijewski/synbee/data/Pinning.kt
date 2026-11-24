@@ -29,11 +29,15 @@ class PinnedKeyTrustManager(private val pin: String) : X509TrustManager {
 
 class PinMismatchException : CertificateException("The hub's key doesn't match the paired key")
 
-/** Only used once, before pairing by hand, to read and show the key fingerprint for the owner to confirm. */
+/**
+ * Only used once, before pairing by hand, to read the key fingerprint for the owner to confirm. It notes the server's
+ * certificate and then refuses it, so no connection is ever made through it.
+ */
 class CaptureTrustManager : X509TrustManager {
     @Volatile var seen: X509Certificate? = null
     override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {
         seen = chain?.firstOrNull()
+        throw CertificateException("Key read; this connection is not used")
     }
     override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) =
         throw CertificateException("Client certificates are not used")

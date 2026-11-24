@@ -15,7 +15,8 @@ Effective 24 November 2026. Applies to the SynBee app for Android (package `pl.k
 | The hub's addresses (home and, if set, outside), the fingerprint of its key, your member name and the phone's name | Stored on the phone | To find your hub and check that it is really yours |
 | A phone token issued by your hub when pairing | Stored on the phone, encrypted with a key kept in Android's Keystore; excluded from backups and device transfers | To prove to your hub that this phone was paired |
 | The pairing code, the phone's model name (e.g. "Pixel 8"), and your requests (which rooms and actions to show, which action to run) | Sent to your hub only, over TLS, to an address you scanned or typed | To pair the phone and to show and run what the hub's owner allowed you |
-| What your hub sends back: your rooms, actions and the state of devices | Shown on screen; not stored | To show them to you |
+| What your hub sends back: your rooms, actions, status tiles and the state of devices | Shown on screen; not stored | To show them to you |
+| A request to pause or resume alerts, if the hub's owner allows you | Sent to your hub only | To stop or restart your home's alerts for a while |
 
 The app sends nothing to the publisher or to any other server. It checks every connection against the key of the hub it was paired with, and sends nothing, not even the pairing code, to a server with another key.
 

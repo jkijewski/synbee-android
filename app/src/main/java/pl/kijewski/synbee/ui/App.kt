@@ -72,6 +72,8 @@ fun App(state: UiState, vm: AppViewModel, activity: Activity) {
 @Composable
 internal fun Header(state: UiState, vm: AppViewModel) {
     var menu by remember { mutableStateOf(false) }
+    var pausing by remember { mutableStateOf(false) }
+    if (pausing) PauseDialog(onPick = { minutes -> pausing = false; vm.pauseAlerts(minutes) }, onDismiss = { pausing = false })
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Image(painterResource(R.drawable.bee), contentDescription = null, modifier = Modifier.size(40.dp))
         Column(Modifier.weight(1f)) {
@@ -93,8 +95,39 @@ internal fun Header(state: UiState, vm: AppViewModel) {
                     DropdownMenuItem(text = { Text("Forget hub") }, onClick = { menu = false; vm.forget() })
                 }
                 if (!state.demo) DropdownMenuItem(text = { Text("Try the demo") }, onClick = { menu = false; vm.startDemo() })
+                if (state.me?.mayPauseAlerts == true) {
+                    val paused = state.me.alertsPaused?.let { it.until > System.currentTimeMillis() } == true
+                    if (paused) DropdownMenuItem(text = { Text("Resume alerts") }, onClick = { menu = false; vm.pauseAlerts(0) })
+                    else DropdownMenuItem(text = { Text("Pause alerts…") }, onClick = { menu = false; pausing = true })
+                }
                 DropdownMenuItem(text = { Text("About") }, onClick = { menu = false; vm.openAbout() })
             }
         }
     }
+}
+
+/** How long to pause alerts: an hour, eight hours, or until 7:00 the next morning. */
+@Composable
+private fun PauseDialog(onPick: (Int) -> Unit, onDismiss: () -> Unit) {
+    val untilMorning = remember {
+        val now = java.util.Calendar.getInstance()
+        val at = (now.clone() as java.util.Calendar).apply {
+            set(java.util.Calendar.HOUR_OF_DAY, 7); set(java.util.Calendar.MINUTE, 0); set(java.util.Calendar.SECOND, 0)
+            if (!after(now)) add(java.util.Calendar.DAY_OF_MONTH, 1)
+        }
+        ((at.timeInMillis - now.timeInMillis) / 60_000L).toInt().coerceIn(1, 24 * 60)
+    }
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Pause alerts") },
+        text = {
+            androidx.compose.foundation.layout.Column {
+                Text("Nothing is sent to Synology Chat while paused. SynBee still records every alert.")
+                TextButton(onClick = { onPick(60) }) { Text("For 1 hour") }
+                TextButton(onClick = { onPick(8 * 60) }) { Text("For 8 hours") }
+                TextButton(onClick = { onPick(untilMorning) }) { Text("Until 7:00") }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
 }

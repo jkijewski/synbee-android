@@ -30,12 +30,16 @@ class HubRefusedException(val status: Int, message: String) : IOException(messag
 private val json = Json { ignoreUnknownKeys = true }
 private val JSON_TYPE = "application/json".toMediaType()
 
-private fun clientFor(trust: X509TrustManager): OkHttpClient {
+private fun clientFor(trust: X509TrustManager, pin: String?): OkHttpClient {
     val ssl = SSLContext.getInstance("TLS").apply { init(null, arrayOf(trust), null) }
     return OkHttpClient.Builder()
         .sslSocketFactory(ssl.socketFactory, trust)
-        // The pinned key replaces host name checks: the hub is reached by its IP address.
-        .hostnameVerifier { _, _ -> true }
+        // The hub is reached by its IP address, so the host name can't be checked against its certificate. The
+        // identity check is the pinned key instead: the session's certificate must carry it, as the trust manager
+        // already required. Nothing is accepted without a pin.
+        .hostnameVerifier { _, session ->
+            pin != null && (runCatching { session.peerCertificates.firstOrNull() }.getOrNull() as? X509Certificate)?.let { spkiFingerprint(it) == pin } == true
+        }
         .connectTimeout(3, TimeUnit.SECONDS)
         .readTimeout(10, TimeUnit.SECONDS)
         .callTimeout(15, TimeUnit.SECONDS)
@@ -47,7 +51,7 @@ private fun clientFor(trust: X509TrustManager): OkHttpClient {
  * order; an address whose server has another key never receives the token, or the pairing code.
  */
 class HubClient(pin: String, private val addresses: () -> List<String>, private val token: () -> String?) : Hub {
-    private val http = clientFor(PinnedKeyTrustManager(pin))
+    private val http = clientFor(PinnedKeyTrustManager(pin), pin)
     @Volatile override var lastGood: String? = null
         private set
 
@@ -109,25 +113,36 @@ class HubClient(pin: String, private val addresses: () -> List<String>, private 
 
     override suspend fun run(id: Int): RunResult = call("/actions/$id/run", "{}") { json.decodeFromString<RunResult>(it) }
 
+    override suspend fun pauseAlerts(minutes: Int): PauseResult = call("/alerts/pause", "{\"minutes\":$minutes}") { json.decodeFromString<PauseResult>(it) }
+
     private fun errorOf(text: String): String? =
         runCatching { json.decodeFromString<JsonObject>(text)["error"]?.jsonPrimitive?.content }.getOrNull()
 
     companion object {
-        /** Reads the key fingerprint at an address, for pairing by typed code. Sends nothing but a ping. */
+        /**
+         * Reads the key fingerprint at an address, for pairing by typed code. First the handshake only shows the key
+         * and is then refused, so nothing is sent; then a ping, trusting exactly that key, checks it is a SynBee hub.
+         */
         suspend fun readFingerprint(address: String): String = withContext(Dispatchers.IO) {
             val capture = CaptureTrustManager()
             try {
-                clientFor(capture).newCall(Request.Builder().url("https://$address$PREFIX/ping").build()).execute().use { r ->
-                    val cert: X509Certificate = capture.seen ?: throw HubUnreachableException("No certificate received")
+                clientFor(capture, null).newCall(Request.Builder().url("https://$address$PREFIX/ping").build()).execute().close()
+            } catch (_: IOException) {
+                // Expected: the capture refuses every handshake once it has seen the key.
+            }
+            val cert: X509Certificate = capture.seen ?: throw HubUnreachableException("The hub can't be reached")
+            val pin = spkiFingerprint(cert)
+            try {
+                clientFor(PinnedKeyTrustManager(pin), pin).newCall(Request.Builder().url("https://$address$PREFIX/ping").build()).execute().use { r ->
                     val ping = runCatching { json.decodeFromString<Ping>(r.body.string()) }.getOrNull()
                     if (!r.isSuccessful || ping?.hub != "synbee") throw HubUnreachableException("This address isn't a SynBee hub")
-                    spkiFingerprint(cert)
                 }
             } catch (e: HubUnreachableException) {
                 throw e
             } catch (e: IOException) {
                 throw HubUnreachableException(e.message ?: "The hub can't be reached")
             }
+            pin
         }
     }
 }

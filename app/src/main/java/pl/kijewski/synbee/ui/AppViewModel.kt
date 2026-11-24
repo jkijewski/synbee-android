@@ -22,6 +22,7 @@ import pl.kijewski.synbee.data.HubClient
 import pl.kijewski.synbee.data.HubRoom
 import pl.kijewski.synbee.data.HubStore
 import pl.kijewski.synbee.data.Me
+import pl.kijewski.synbee.data.StatusTile
 import pl.kijewski.synbee.data.UnauthorizedException
 import pl.kijewski.synbee.data.isHomeAddress
 import pl.kijewski.synbee.data.isValidAddress
@@ -43,6 +44,10 @@ data class UiState(
     val me: Me? = null,
     val rooms: List<HubRoom> = emptyList(),
     val actions: List<HubAction> = emptyList(),
+    /** Read-only status tiles: devices, sensor groups, checks. */
+    val tiles: List<StatusTile> = emptyList(),
+    /** The status tile whose explanation is open. */
+    val tileOpen: StatusTile? = null,
     /** The action running now, by id. */
     val running: Int? = null,
     /** The details sheet of a long-pressed action, while open. */
@@ -190,7 +195,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val client = hub() ?: return
         try {
             val home = client.home()
-            _state.update { it.copy(rooms = home.rooms, actions = home.actions) }
+            _state.update { it.copy(rooms = home.rooms, actions = home.actions, tiles = home.tiles, tileOpen = it.tileOpen?.let { open -> home.tiles.find { t -> t.id == open.id } }) }
             _state.value.details?.let { d -> _state.update { it.copy(details = client.details(d.id)) } }
             _state.value.roomPage?.let { r -> _state.update { it.copy(roomPage = client.room(r.id)) } }
         } catch (e: UnauthorizedException) {
@@ -234,6 +239,30 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun openAbout() = _state.update { it.copy(aboutOpen = true) }
 
     fun closeAbout() = _state.update { it.copy(aboutOpen = false) }
+
+    fun openTile(tile: StatusTile) = _state.update { it.copy(tileOpen = tile) }
+
+    fun closeTile() = _state.update { it.copy(tileOpen = null) }
+
+    /** Pauses alerts for `minutes`, or resumes with 0 (only for members the owner allows). */
+    fun pauseAlerts(minutes: Int) {
+        val client = hub() ?: return
+        viewModelScope.launch {
+            try {
+                val r = client.pauseAlerts(minutes)
+                val me = runCatching { client.me() }.getOrNull()
+                _state.update {
+                    it.copy(
+                        me = me ?: it.me?.copy(alertsPaused = r.paused),
+                        message = if (r.paused == null) "Alerts resumed." else "Alerts paused until ${hhmm(r.paused.until)}.",
+                        error = false,
+                    )
+                }
+            } catch (e: Exception) {
+                fail(e.message ?: "The hub can't be reached")
+            }
+        }
+    }
 
     /**
      * The outside address typed by the user, as in Synology Photos: a host name or IP and a port. Checked by reaching
@@ -279,12 +308,15 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                         busy = false,
                         rooms = home.rooms,
                         actions = home.actions,
+                        tiles = home.tiles,
                         via = client.lastGood,
                         message = if (home.actions.isEmpty()) "No actions yet. Create them in SynBee's web interface." else null,
                         error = false,
                     )
                 }
                 // The hub says where it can be reached, so a new outside address reaches the phone by itself.
+                // Who this phone is, and whether it may pause alerts.
+                runCatching { client.me() }.getOrNull()?.let { me -> _state.update { it.copy(me = me) } }
                 if (client is HubClient) runCatching { client.connection() }.getOrNull()?.let { c -> store.updateConnection(c.home, c.outside, c.outsideAllowed) }
             } catch (e: UnauthorizedException) {
                 unpaired()
@@ -302,7 +334,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             try {
                 val r = client.run(action.id)
                 _state.update {
-                    it.copy(running = null, message = if (r.ok) "${action.name}: done" else "${action.name}: ${r.error ?: "failed"}", error = !r.ok)
+                    it.copy(running = null, message = when { r.ok -> "${action.name}: done"; r.notRun != null -> "${action.name}: not run, ${r.notRun}"; else -> "${action.name}: ${r.error ?: "failed"}" }, error = !r.ok)
                 }
                 refreshQuietly()
             } catch (e: UnauthorizedException) {
@@ -324,4 +356,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         store.forget()
         _state.update { UiState(paired = false, message = "Forgotten on this phone. Revoke it on the hub's App users page too.") }
     }
+}
+
+/** A time of day, e.g. 07:00, for messages. */
+internal fun hhmm(epochMs: Long): String {
+    val c = java.util.Calendar.getInstance().apply { timeInMillis = epochMs }
+    return "%02d:%02d".format(c.get(java.util.Calendar.HOUR_OF_DAY), c.get(java.util.Calendar.MINUTE))
 }

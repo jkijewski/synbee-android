@@ -27,4 +27,15 @@ class DemoHubTest {
         assertEquals(3, hub.room(1).devices.size) // two lamps and the climate sensor
         assertEquals(2, hub.details(on.id).targets.size)
     }
+
+    @Test fun `shows status tiles and pauses alerts`() = runTest {
+        val hub = DemoHub()
+        val tiles = hub.home().tiles
+        assertTrue(tiles.any { it.kind == "sensors" && it.text == "All closed" })
+        assertTrue(tiles.all { t -> t.room == null || t.room in hub.home().rooms.map { it.id } })
+        assertTrue(hub.me().mayPauseAlerts)
+        val paused = hub.pauseAlerts(60).paused
+        assertTrue(paused != null && paused.until > System.currentTimeMillis())
+        assertEquals(null, hub.pauseAlerts(0).paused)
+    }
 }

@@ -24,6 +24,9 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import pl.kijewski.synbee.data.HubAction
 import pl.kijewski.synbee.data.HubRoom
+import pl.kijewski.synbee.data.StatusTile
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -41,14 +44,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 /** A page of the pager: a room, or the actions that are in no room. */
-private data class Page(val room: HubRoom?, val actions: List<HubAction>)
+private data class Page(val room: HubRoom?, val actions: List<HubAction>, val tiles: List<StatusTile>)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ColumnScope.PairedScreen(state: UiState, vm: AppViewModel) {
-    val pages = remember(state.rooms, state.actions) {
-        state.rooms.map { r -> Page(r, state.actions.filter { r.id in it.rooms }) } +
-            state.actions.filter { it.rooms.isEmpty() }.let { if (it.isEmpty()) emptyList() else listOf(Page(null, it)) }
+    val pages = remember(state.rooms, state.actions, state.tiles) {
+        state.rooms.map { r -> Page(r, state.actions.filter { r.id in it.rooms }, state.tiles.filter { it.room == r.id }) } +
+            Page(null, state.actions.filter { it.rooms.isEmpty() }, state.tiles.filter { it.room == null || state.rooms.none { r -> r.id == it.room } })
+                .let { if (it.actions.isEmpty() && it.tiles.isEmpty()) emptyList() else listOf(it) }
     }
     if (pages.isEmpty()) return
     val pager = rememberPagerState(pageCount = { pages.size })
@@ -83,10 +87,23 @@ internal fun ColumnScope.PairedScreen(state: UiState, vm: AppViewModel) {
             contentPadding = PaddingValues(vertical = 10.dp),
             modifier = Modifier.fillMaxSize(),
         ) {
+            // Status first: what the room looks like; then what can be done in it.
+            items(page.tiles, key = { it.id }) { tile -> StatusTileCard(tile, vm) }
             items(page.actions, key = { it.id }) { action -> ActionTile(action, color, state.running, vm) }
         }
     }
-    state.me?.let { me -> Text("SynBee ${me.hubVersion} · ${me.actions} action(s), ${me.rooms} room(s) allowed", style = MaterialTheme.typography.bodySmall) }
+    state.me?.alertsPaused?.takeIf { it.until > System.currentTimeMillis() }?.let { p ->
+        Text("Alerts paused until ${hhmm(p.until)} by ${p.by}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+    }
+    state.tileOpen?.let { tile ->
+        AlertDialog(
+            onDismissRequest = vm::closeTile,
+            icon = { Symbol(tile.icon) },
+            title = { Text(tile.name) },
+            text = { Text(listOf(tile.text, *tile.why.toTypedArray()).joinToString("\n")) },
+            confirmButton = { TextButton(onClick = vm::closeTile) { Text("Close") } },
+        )
+    }
 }
 
 /**
@@ -119,6 +136,36 @@ private fun ActionTile(action: HubAction, roomColor: Color, running: Int?, vm: A
             }
             if (running == action.id) CircularProgressIndicator(Modifier.size(22.dp).align(Alignment.TopEnd), strokeWidth = 2.dp)
             else if (action.state == "active") Symbol("check_circle", Modifier.align(Alignment.TopEnd), size = 22.sp, color = onFill)
+        }
+    }
+}
+
+/** Fill colour of a status tile by its level: green, grey, orange, red. */
+@Composable
+private fun levelColor(level: String): Color = when (level) {
+    "fine" -> Color(0xFF6BBF73)
+    "warning" -> Color(0xFFF0A23B)
+    "alarm" -> Color(0xFFE5534B)
+    else -> MaterialTheme.colorScheme.outline
+}
+
+/** A read-only status tile: its state in words, coloured by level; a press explains it. */
+@Composable
+private fun StatusTileCard(tile: StatusTile, vm: AppViewModel) {
+    val surface = MaterialTheme.colorScheme.surface
+    val accent = tile.color?.let { hubColor(it) } ?: levelColor(tile.level)
+    Card(
+        colors = CardDefaults.cardColors(containerColor = accent.copy(alpha = 0.16f).compositeOver(surface), contentColor = MaterialTheme.colorScheme.onSurface),
+        border = BorderStroke(2.dp, accent),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(128.dp)
+            .combinedClickable(onClick = { vm.openTile(tile) }, onLongClick = { vm.openTile(tile) }),
+    ) {
+        Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Symbol(tile.icon.ifBlank { "sensors" }, size = 28.sp, color = accent)
+            Text(tile.name, style = MaterialTheme.typography.titleSmall, maxLines = 2)
+            Text(tile.text, style = MaterialTheme.typography.bodyMedium, maxLines = 2)
         }
     }
 }

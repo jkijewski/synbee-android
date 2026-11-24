@@ -15,8 +15,8 @@ android {
         applicationId = "pl.kijewski.synbee"
         minSdk = 29
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
     }
 
     // Release signing key (decision 0003): kept outside the repository, at the path in the Gradle property
@@ -41,6 +41,7 @@ android {
         release {
             if (signing != null) signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }

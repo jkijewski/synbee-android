@@ -27,7 +27,9 @@ Everything the Play Console asks for, ready to paste. English only for now.
 > • Shows your rooms as tabs to swipe between, each with its colour and icon.
 > • Shows the actions the hub's owner set up, such as "Movie time" or "Good night", as tiles. Tap one to run it.
 > • Colours each tile by what it switches: on, partly on or off. A check shows an action whose lights already look the way it sets them.
+> • Status tiles show how things are: "Windows: all closed", the living room temperature, "Ready to leave", in the owner's words and colours.
 > • Long press a tile to see what it switches, device by device. Long press a room to see its devices: lights, sensors, batteries.
+> • If the owner allows it, pause the home's alerts for an evening.
 > • Works at home over Wi-Fi and, if the hub's owner allows it, away from home over the internet, like Synology Photos.
 >
 > **Private by design**
@@ -44,6 +46,8 @@ Everything the Play Console asks for, ready to paste. English only for now.
 > * Away from home, if your hub's owner allows it, the app's requests travel over the internet to your home, encrypted and accepted only by your own hub. Scanning the pairing QR code uses Google's code scanner, which may send Google diagnostic data.
 >
 > SynBee is free and open source (MIT licence). It comes without warranty: don't rely on it for safety or security.
+>
+> SynBee is an independent project, not affiliated with or endorsed by Synology Inc. Synology and Synology Chat are trademarks of Synology Inc.
 
 ## Graphics
 
@@ -88,6 +92,10 @@ The app needs a SynBee hub on a Synology NAS for most of its functions. Give rev
 - **News app:** no.
 - **Permissions:** `INTERNET`, `ACCESS_NETWORK_STATE` only; no sensitive permissions to declare.
 - **Foreground services, background location, exact alarms:** none.
+
+## Release notes for 1.1.0 (500 characters at most)
+
+> Status tiles in each room: temperatures, doors and windows, and your home's own checks, in colour. Actions that can't run now say why. Pause alerts for an evening, if your hub's owner allows it.
 
 ## Release notes for 1.0.0 (500 characters at most)
 

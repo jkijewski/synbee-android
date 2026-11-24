@@ -26,9 +26,10 @@ The app speaks version 1 of the hub's app API. Its requests and answers are desc
 ## Data flow
 
 1. **Pairing:** the QR code (or typed address and code) gives the hub's addresses, its key fingerprint and a one-time code. `HubClient` pings the hub with that key pinned, then posts the code and the phone's name, and receives the token. `HubStore` keeps the addresses, fingerprint and names; `TokenStore` the token.
-2. **Home screen:** `GET /home` gives the member's rooms (with colours) and actions (with state, power and a status line). Tabs and tiles are built from it.
-3. **Run:** `POST /actions/{id}/run`; the home screen is re-read at once to show the new state.
-4. **Where to connect:** after each load, `GET /connection` updates the home addresses and the outside address the owner allows. On Wi-Fi the home address is tried first, elsewhere the outside one; the last address that answered is tried first next time.
+2. **Home screen:** `GET /home` gives the member's rooms (with colours), actions (with state, power and a status line) and status tiles (with words, a level, an optional colour and an explanation). Tabs, status tiles and action tiles are built from it; `GET /me` says whether the member may pause alerts.
+3. **Run:** `POST /actions/{id}/run`; the home screen is re-read at once to show the new state. An answer with `notRun` means the action's conditions didn't hold; the app shows what wasn't true.
+4. **Pause alerts:** `POST /alerts/pause` with minutes (0 resumes).
+5. **Where to connect:** after each load, `GET /connection` updates the home addresses and the outside address the owner allows. On Wi-Fi the home address is tried first, elsewhere the outside one; the last address that answered is tried first next time.
 
 ## Security model
 

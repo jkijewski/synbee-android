@@ -84,4 +84,13 @@ class PinningTest {
         assertEquals("/api/app/v1/actions/7/run", run.url.encodedPath)
         hub.close()
     }
+
+    @Test fun readsTheKeyForTypedPairingWithoutTrustingAnyOther() = runTest {
+        val hubKey = HeldCertificate.Builder().commonName("SynBee").build()
+        val hub = server(hubKey).apply { enqueue(MockResponse.Builder().body("""{"hub":"synbee","api":1,"version":"1.1.0"}""").build()) }
+        assertEquals(spkiFingerprint(hubKey.certificate), HubClient.readFingerprint("127.0.0.1:${hub.port}"))
+        // The key is read in a refused handshake; only the ping, pinned to that key, reaches the server.
+        assertEquals(1, hub.requestCount)
+        hub.close()
+    }
 }
