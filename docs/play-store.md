@@ -30,7 +30,7 @@ Everything the Play Console asks for, ready to paste. English only for now.
 > • Status tiles show how things are: "Windows: all closed", the living room temperature, "Ready to leave", in the owner's words and colours.
 > • Long press a tile to see what it switches, device by device. Long press a room to see its devices: lights, sensors, batteries.
 > • If the owner allows it, pause the home's alerts for an evening.
-> • Works at home over Wi-Fi and, if the hub's owner allows it, away from home over the internet, like Synology Photos.
+> • Works at home over Wi-Fi and, if the hub's owner allows it, away from home over the internet, at an address and port of your home, with no cloud account.
 >
 > **Private by design**
 > • Nothing leaves your network.* The app talks only to your own SynBee hub. There are no accounts, no cloud, no analytics and no ads.

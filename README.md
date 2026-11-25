@@ -16,7 +16,7 @@ The mobile app for [SynBee](https://github.com/jkijewski/synbee), a private Zigb
 - **About** (⋮ → About): what the app is, the author, the MIT licence in full and the no-warranty notice.
 - **Demo:** "Try the demo" on the pairing screen shows a sample home kept in the app, for trying it without a hub. Nothing is sent anywhere.
 - **Sends a test request** (`GET /api/app/v1/me`, in the ⋮ menu).
-- **At home and away**, like Synology Photos: the hub's home address on Wi-Fi, and away from home the outside address and port (a DDNS name such as `myhome.synology.me` and the port the router forwards). The hub announces it once the owner switches it on, or it can be typed under ⋮ → Connection. Pairing works at home or away.
+- **At home and away**, at an address and port of your home, with no cloud account: the hub's home address on Wi-Fi, and away from home the outside address and port (a DDNS name such as `myhome.synology.me` and the port the router forwards). The hub announces it once the owner switches it on, or it can be typed under ⋮ → Connection. Pairing works at home or away.
 
 ## How it connects
 
