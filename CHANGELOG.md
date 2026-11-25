@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1 (25 November 2026)
+
+- The status bar's clock and icons are readable again in light mode on Android 15 and newer: the app now draws edge to edge, with system bar icons following the system's light or dark theme.
+
 ## 1.1.0 (24 November 2026)
 
 - Status tiles in each room: devices, sensor groups and checks the owner chose, coloured by level (temperatures blue to red), explained on a tap.

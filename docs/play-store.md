@@ -93,6 +93,10 @@ The app needs a SynBee hub on a Synology NAS for most of its functions. Give rev
 - **Permissions:** `INTERNET`, `ACCESS_NETWORK_STATE` only; no sensitive permissions to declare.
 - **Foreground services, background location, exact alarms:** none.
 
+## Release notes for 1.1.1 (500 characters at most)
+
+> The status bar's clock and icons are readable again in light mode on newer Android versions.
+
 ## Release notes for 1.1.0 (500 characters at most)
 
 > Status tiles in each room: temperatures, doors and windows, and your home's own checks, in colour. Actions that can't run now say why. Pause alerts for an evening, if your hub's owner allows it.
